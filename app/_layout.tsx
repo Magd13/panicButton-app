@@ -5,16 +5,20 @@ export default function RootLayout() {
   return (
     <Stack 
       screenOptions={{
-        headerStyle:{
-          backgroundColor: "#f4511e"
-        },
-        headerTintColor:"#fff",
-        headerTitleStyle:{
-          fontWeight:"bold",
-        }
-      }}>;
-      <Stack.Screen name="index"/>
-      <Stack.Screen name="Register"/>
+        headerShown: false, // Esto oculta el encabezado en todas las pantallas
+      }}>
+      <Stack.Screen 
+        name="index"
+        options={{
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen 
+        name="Register"
+        options={{
+          headerShown: false,
+        }}
+      />
     </Stack>
   );
 }
