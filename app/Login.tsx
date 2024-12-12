@@ -3,24 +3,24 @@ import { Link, Stack, router } from "expo-router";  // Añadimos router
 import { View, Text, Image, TouchableOpacity, TextInput, Alert } from "react-native";
 import { useState } from 'react';
 import { FontAwesome } from '@expo/vector-icons';
+import {login } from '../services/authService'
 
 // Interfaces para el manejo de errores
 interface ValidationErrors {
   cedula?: string;
-  password?: string;
+  contraseña?: string;
   general?: string;
 }
 
 export default function LoginScreen() {
   const [cedula, setCedula] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
+  const [contraseña, setPassword] = useState<string>('');
   const [errors, setErrors] = useState<ValidationErrors>({});
 
   // Función para validar la cédula ecuatoriana
   const validateCedula = (cedula: string): boolean => {
     if (!/^\d{10}$/.test(cedula)) return false;
 
-    // Algoritmo de validación de cédula ecuatoriana
     const coeficientes = [2, 1, 2, 1, 2, 1, 2, 1, 2];
     const provincia = parseInt(cedula.substring(0, 2));
     
@@ -42,51 +42,48 @@ export default function LoginScreen() {
     return ultimoDigito === digitoVerificador;
   };
 
-  // Función para validar la contraseña
-  const validatePassword = (password: string): boolean => {
-    return password.length >= 6;
+  const validatePassword = (contraseña: string): boolean => {
+    return contraseña.length >= 6;
   };
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     const newErrors: ValidationErrors = {};
     
-    // Validaciones de campos vacíos
     if (!cedula.trim()) {
       newErrors.cedula = 'El número de cédula es obligatorio';
     }
     
-    if (!password.trim()) {
-      newErrors.password = 'La contraseña es obligatoria';
+    if (!contraseña.trim()) {
+      newErrors.contraseña = 'La contraseña es obligatoria';
     }
 
-    // Validación específica de cédula
     if (cedula.trim() && !validateCedula(cedula)) {
       newErrors.cedula = cedula.length !== 10 
         ? 'La cédula debe tener exactamente 10 dígitos'
         : 'El número de cédula ingresado no es válido';
     }
 
-    // Validación específica de contraseña
-    if (password.trim() && !validatePassword(password)) {
-      newErrors.password = 'La contraseña debe tener al menos 6 caracteres';
+    if (contraseña.trim() && !validatePassword(contraseña)) {
+      newErrors.contraseña = 'La contraseña debe tener al menos 6 caracteres';
     }
 
-    // Si hay errores, los mostramos y detenemos el proceso
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       return;
     }
 
-    // Si no hay errores, limpiamos los mensajes de error
     setErrors({});
 
-    // Si las validaciones son exitosas, redirigimos a Register
-    // Aquí normalmente iría tu lógica de autenticación
-    // Por ahora solo redirigimos si los datos son válidos
-    router.push('/Register');
+    try {
+      const loginData = { cedula, contraseña};
+      const response = await login(loginData);
+      router.push('/(home)');
+    }catch {
+      setErrors({cedula: 'El número de cédula o la contraseña son incorrectos'})
+    }
+
   };
 
-  // Función para mostrar errores
   const renderError = (errorMessage: string) => (
     <View className="w-full bg-red-100 p-2 rounded-lg mb-2">
       <Text className="text-red-600 text-sm text-center">{errorMessage}</Text>
@@ -95,18 +92,6 @@ export default function LoginScreen() {
 
   return (
     <View className="flex-1 bg-gray-100">
-      {/* Header */}
-      <View className="bg-white py-4 px-6 flex-row items-center shadow-sm">
-        <Image
-          source={require("../assets/images/logo.png")}
-          className="w-10 h-10"
-          resizeMode="contain"
-        />
-        <Text className="text-xl font-bold text-gray-800 ml-4">
-          Iniciar Sesión
-        </Text>
-      </View>
-
       <View className="flex-1 items-center justify-center px-6">
         {/* User Icon */}
         <View className="mb-8">
@@ -140,20 +125,20 @@ export default function LoginScreen() {
         <View className="w-full mb-4">
           <TextInput
             className={`w-full bg-white py-3 px-4 rounded-lg border ${
-              errors.password ? 'border-red-500' : 'border-gray-300'
+              errors.contraseña ? 'border-red-500' : 'border-gray-300'
             }`}
             placeholder="Contraseña"
             placeholderTextColor="#a1a1a1"
             secureTextEntry
-            value={password}
+            value={contraseña}
             onChangeText={(text) => {
               setPassword(text);
-              if (errors.password) {
-                setErrors(prev => ({ ...prev, password: undefined }));
+              if (errors.contraseña) {
+                setErrors(prev => ({ ...prev, contraseña: undefined }));
               }
             }}
           />
-          {errors.password && renderError(errors.password)}
+          {errors.contraseña && renderError(errors.contraseña)}
         </View>
 
         {/* Login Button */}
@@ -185,6 +170,3 @@ export default function LoginScreen() {
   );
 }
 
-export const meta = {
-  title: "Botón de Pánico",
-};

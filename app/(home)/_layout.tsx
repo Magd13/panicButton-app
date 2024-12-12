@@ -1,7 +1,7 @@
 import { Stack } from "expo-router";
-import "../global.css";
+import "../../global.css";
 
-export default function RootLayout() {
+export default function HomeLayout() {
   return (
     <Stack 
       screenOptions={{
@@ -21,16 +21,22 @@ export default function RootLayout() {
       />
       
       <Stack.Screen 
-        name="Login"
+        name="perfil"
         options={{
-          title: 'Iniciar Sesión',
+          title: 'Mi perfil',
         }}
       />
 
       <Stack.Screen 
-        name="Register"
+        name="historyalerts"
         options={{
-          title: 'Crear Cuenta',
+          title: 'Historial de Alertas',
+        }}
+      />
+      <Stack.Screen 
+        name="historynotification"
+        options={{
+          title: 'Historial de notificaciones',
         }}
       />
     </Stack>
