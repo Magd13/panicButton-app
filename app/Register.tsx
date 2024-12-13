@@ -1,6 +1,7 @@
 import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from "react-native";
 import { useState } from 'react';
 import { router } from "expo-router";
+import { register } from "../services/authService";
 
 interface ValidationErrors {
   nombre?: string;
@@ -9,6 +10,7 @@ interface ValidationErrors {
   email?: string;
   telefono?: string;
   contraseña?: string;
+  confirmarContraseña?: string;
 }
 
 interface RegisterData {
@@ -29,6 +31,7 @@ export default function RegisterScreen() {
     email: '',
     telefono: '',
     contraseña: '',
+    confirmarContraseña:''
   });
   const [errors, setErrors] = useState<ValidationErrors>({});
 
@@ -107,6 +110,11 @@ export default function RegisterScreen() {
       newErrors.contraseña = 'La contraseña debe contener al menos una letra mayúscula, una letra minúscula, un número y un carácter especial';
     }
 
+    // Validación de confirmación de contraseña
+    if (formData.contraseña !== formData.confirmarContraseña) {
+      newErrors.confirmarContraseña = 'Las contraseñas no coinciden';
+    }
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -118,8 +126,8 @@ export default function RegisterScreen() {
           ...formData,
           fecha_registro: new Date().toISOString().split('T')[0]
         };
-        
-        // Aquí iría tu lógica de registro
+        const response = await register(registerData);
+
         console.log('Datos de registro:', registerData);
         router.push('/Login');
       } catch (error) {
@@ -230,6 +238,18 @@ export default function RegisterScreen() {
               onChangeText={(text) => setFormData({ ...formData, contraseña: text })}
             />
             {errors.contraseña && renderError(errors.contraseña)}
+          </View>
+          <View className="mb-6">
+            <TextInput
+              className={`w-full bg-white py-3 px-4 rounded-lg border ${
+                errors.contraseña ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Repite la Contraseña"
+              secureTextEntry
+              value={formData.confirmarContraseña}
+              onChangeText={(text) => setFormData({ ...formData, confirmarContraseña: text })}
+            />
+            {errors.confirmarContraseña && renderError(errors.confirmarContraseña)}
           </View>
 
           {/* Botón de registro */}
