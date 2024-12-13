@@ -121,7 +121,7 @@ export default function RegisterScreen() {
         
         // Aquí iría tu lógica de registro
         console.log('Datos de registro:', registerData);
-        router.push('/login');
+        router.push('/Login');
       } catch (error) {
         setErrors({
           email: 'Error al registrar el usuario'
@@ -244,7 +244,7 @@ export default function RegisterScreen() {
 
           {/* Link a Login */}
           <TouchableOpacity 
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/Login')}
             className="mt-4"
           >
             <Text className="text-blue-600 text-sm text-center">
