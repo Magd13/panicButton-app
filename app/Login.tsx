@@ -100,7 +100,7 @@ export default function LoginScreen() {
 
         {/* General Error Message */}
         {errors.general && renderError(errors.general)}
-
+        
         {/* Inputs */}
         <View className="w-full mb-4">
           <TextInput

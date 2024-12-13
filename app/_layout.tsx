@@ -1,6 +1,7 @@
 import { Stack } from "expo-router";
 import "../global.css";
 
+
 export default function RootLayout() {
   return (
     <Stack 
@@ -26,7 +27,13 @@ export default function RootLayout() {
           title: 'Iniciar Sesión',
         }}
       />
-
+      <Stack.Screen
+        name='(home)'
+        options={{
+          title: 'Home',
+          headerShown: false,          
+        }}
+      />
       <Stack.Screen 
         name="Register"
         options={{
