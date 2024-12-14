@@ -1,4 +1,4 @@
-package com.botndepnico
+package com.magd13l.panicbuttonapp
 
 import android.app.Application
 import android.content.res.Configuration

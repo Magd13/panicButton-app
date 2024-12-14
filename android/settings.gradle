@@ -21,7 +21,7 @@ extensions.configure(com.facebook.react.ReactSettingsExtension) { ex ->
   }
 }
 
-rootProject.name = 'BotndePnico'
+rootProject.name = 'Botón de Pánico'
 
 dependencyResolutionManagement {
   versionCatalogs {
