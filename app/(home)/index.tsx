@@ -1,9 +1,12 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Text, Alert, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Text, Alert, ActivityIndicator, Button, Touchable, TouchableOpacity } from "react-native";
 import MapView, {Marker} from "react-native-maps/lib";
 import Ionicons from '@expo/vector-icons/Ionicons';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
 import * as Location from 'expo-location';
 import '../../global.css';
+import { startPanicService } from "../../services/backgroundService";
+import { stopPanicService } from "../../services/backgroundService";
 interface LocationType {
     latitude: number;
     longitude: number;
@@ -14,6 +17,7 @@ interface LocationType {
 export default function MapPage() {
     const [location, setLocation ] = useState<LocationType | null>(null);
     const [loading, setLoading] = useState(true);
+    const [panicActivated, setPanicActivated] = useState(false); 
 
     useEffect(()=>{
         const getLocation = async()=>{
@@ -41,6 +45,15 @@ export default function MapPage() {
         getLocation();
     },[]);
 
+    const toggleButtonPanicMode = () => {
+        if (panicActivated) {
+            stopPanicService();
+        } else {
+            startPanicService();
+        }
+        setPanicActivated(!panicActivated)
+    }
+
     return (
         <View style={styles.container} className="flex-1">
             {loading ? (
@@ -58,7 +71,19 @@ export default function MapPage() {
             ):(
                 <AlertText/>
             )}
-        </View>
+            <View className="absolute bottom-10 w-full items-center">
+                <TouchableOpacity
+                    onPress={toggleButtonPanicMode}
+                    className="p-4 bg-gray-200 rounded-full"
+                >
+                     <FontAwesome
+                        name="power-off"
+                        size={24}
+                        color={panicActivated ? "red" : "black"}
+                    />
+                </TouchableOpacity>
+            </View>
+            </View>
     )
       
 }
