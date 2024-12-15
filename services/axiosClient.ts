@@ -14,7 +14,7 @@ apiClient.interceptors.request.use(
 );
 
 apiClient.interceptors.response.use (
-    (response) => response.data,
+    (response) => response,
     (error) => {
         if (error.response) {
           console.error('Error en la respuesta:', error.response.data);

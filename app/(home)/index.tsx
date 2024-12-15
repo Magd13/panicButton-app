@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Text, Alert, ActivityIndicator } from "react-native";
+import { View, StyleSheet, Text, Alert, ActivityIndicator, TouchableOpacity } from "react-native";
 import MapView, {Marker} from "react-native-maps/lib";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import '../../global.css';
+import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 interface LocationType {
     latitude: number;
     longitude: number;
@@ -14,6 +15,7 @@ interface LocationType {
 export default function MapPage() {
     const [location, setLocation ] = useState<LocationType | null>(null);
     const [loading, setLoading] = useState(true);
+    const [panicActivated, setPanicActivated] = useState(false); 
 
     useEffect(()=>{
         const getLocation = async()=>{
@@ -41,6 +43,15 @@ export default function MapPage() {
         getLocation();
     },[]);
 
+    const toggleButtonPanicMode = () => {
+        if (panicActivated) {
+            console.log("Alarma encendida")
+        } else {
+            console.log("Alarma apagada")
+        }
+        setPanicActivated(!panicActivated)
+    }
+
     return (
         <View style={styles.container} className="flex-1">
             {loading ? (
@@ -58,6 +69,17 @@ export default function MapPage() {
             ):(
                 <AlertText/>
             )}
+            <View className="absolute bottom-10 w-full items-center">
+                <TouchableOpacity
+                    onPress={toggleButtonPanicMode}
+                    className="p-4 bg-gray-200 rounded-full"
+                >
+                    <FontAwesome5 name="power-off" 
+                    size={28} 
+                    color={panicActivated ? "green" : "red"}
+                    />
+                </TouchableOpacity>
+            </View>
         </View>
     )
       

@@ -77,7 +77,10 @@ export default function LoginScreen() {
     try {
       const loginData = { cedula, contraseña};
       const response = await login(loginData);
-      router.push('/(home)');
+      if (response)
+        router.push('/(home)');
+      else 
+      setErrors({cedula: 'Cédula o contraseña incorrectos'});
     }catch {
       setErrors({cedula: 'El número de cédula o la contraseña son incorrectos'})
     }
