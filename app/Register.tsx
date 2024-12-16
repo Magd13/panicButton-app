@@ -1,9 +1,10 @@
-import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Button, Image } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView, Button, Image, Alert } from "react-native";
 import { Picker } from '@react-native-picker/picker';
 import React, { useState } from 'react';
 import { router } from "expo-router";
 import { register } from "../services/authService";
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 
 interface ValidationErrors {
   nombre?: string;
@@ -146,7 +147,9 @@ export default function RegisterScreen() {
     } else if (!/^\d{10}$/.test(formData.contacto_emergencia1)) {
       newErrors.contacto_emergencia1 = 'El número debe contener 10 dígitos';
     }
-    if (formData.contacto_emergencia2 && !/^\d{10}$/.test(formData.contacto_emergencia2)) {
+    if (!formData.contacto_emergencia2) {
+      newErrors.contacto_emergencia2 = 'El contacto de emergencia 2 es obligatorio';
+    } else if (!/^\d{10}$/.test(formData.contacto_emergencia2)) {
       newErrors.contacto_emergencia2 = 'El número debe contener 10 dígitos';
     }
 
@@ -165,21 +168,65 @@ export default function RegisterScreen() {
   };
 
   const handlePickImage = async () => {
-    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+    const options = ['Tomar foto', 'Seleccionar desde galería', 'Cancelar'];
+    Alert.alert(
+      'Seleccionar imagen',
+      '¿Cómo deseas añadir la imagen?',
+      [
+        {
+          text: options[0], // Tomar foto
+          onPress: async () => {
+            const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
+            if (!permissionResult.granted) {
+              alert('Se requiere permiso para acceder a la cámara.');
+              return;
+            }
+            const pickerResult = await ImagePicker.launchCameraAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 1,
+            });
+  
+            if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+              const base64Image = await convertImageToBase64(pickerResult.assets[0].uri);
+              setFormData({ ...formData, foto_perfil: base64Image }); // Guardar en Base64
+            }
+          },
+        },
+        {
+          text: options[1], // Seleccionar desde galería
+          onPress: async () => {
+            const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+            if (!permissionResult.granted) {
+              alert('Se requiere permiso para acceder a la galería.');
+              return;
+            }
+            const pickerResult = await ImagePicker.launchImageLibraryAsync({
+              allowsEditing: true,
+              aspect: [4, 3],
+              quality: 1,
+            });
+  
+            if (!pickerResult.canceled && pickerResult.assets.length > 0) {
+              const base64Image = await convertImageToBase64(pickerResult.assets[0].uri);
+              setFormData({ ...formData, foto_perfil: base64Image }); // Guardar en Base64
+            }
+          },
+        },
+        { text: options[2], style: 'cancel' }, // Cancelar
+      ]
+    );
+  };
 
-    if (permissionResult.granted === false) {
-      alert("Se requiere permiso para acceder a la cámara");
-      return;
-    }
-
-    const pickerResult = await ImagePicker.launchCameraAsync({
-      allowsEditing: true,
-      aspect: [4, 3],
-      quality: 1,
-    });
-
-    if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
-      setFormData({ ...formData, foto_perfil: pickerResult.assets[0].uri });
+  const convertImageToBase64 = async (uri: string): Promise<string> => {
+    try {
+      const base64 = await FileSystem.readAsStringAsync(uri, {
+        encoding: FileSystem.EncodingType.Base64,
+      });
+      return base64;
+    } catch (error) {
+      console.error('Error al convertir la imagen a Base64:', error);
+      throw new Error('No se pudo procesar la imagen seleccionada.');
     }
   };
 
@@ -191,9 +238,9 @@ export default function RegisterScreen() {
           fecha_registro: new Date().toISOString().split('T')[0]
         };
         const response = await register(registerData);
-
-        console.log('Datos de registro:', registerData);
-        router.push('/Login');
+        if (response) {
+          router.push('/Login');
+        }
       } catch (error) {
         setErrors({
           email: 'Error al registrar el usuario'
@@ -209,7 +256,7 @@ export default function RegisterScreen() {
       <Text className="text-red-600 text-xs text-center">{errorMessage}</Text>
     </View>
   );
-  console.log('Errores de validación:', errors);
+
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -324,8 +371,24 @@ export default function RegisterScreen() {
                 errors.fecha_nacimiento ? 'border-red-500' : 'border-gray-300'
               }`}
               placeholder="Fecha de nacimiento (YYYY-MM-DD)"
+              keyboardType="numeric"
               value={formData.fecha_nacimiento}
-              onChangeText={(text) => setFormData({ ...formData, fecha_nacimiento: text })}
+              onChangeText={(text) => {
+                // Remover cualquier carácter no numérico
+                const numericText = text.replace(/[^0-9]/g, '');
+              
+                // Insertar los guiones automáticamente según la longitud del texto
+                let formattedText = numericText;
+                if (numericText.length > 4) {
+                  formattedText = `${numericText.slice(0, 4)}-${numericText.slice(4)}`;
+                }
+                if (numericText.length > 6) {
+                  formattedText = `${formattedText.slice(0, 7)}-${numericText.slice(6)}`;
+                }
+              
+                // Actualizar el valor formateado
+                setFormData({ ...formData, fecha_nacimiento: formattedText });
+              }}
             />
             {errors.fecha_nacimiento && renderError(errors.fecha_nacimiento)}
           </View>
@@ -351,7 +414,7 @@ export default function RegisterScreen() {
               className={`w-full bg-white py-3 px-4 rounded-lg border ${
                 errors.contacto_emergencia2 ? 'border-red-500' : 'border-gray-300'
               }`}
-              placeholder="Contacto de emergencia 2 (opcional)"
+              placeholder="Contacto de emergencia 2 "
               keyboardType="numeric"
               maxLength={10}
               value={formData.contacto_emergencia2}
@@ -381,10 +444,10 @@ export default function RegisterScreen() {
           </View>
 
           {/* Subir foto */}
-          <View className="mb-6">
+          <View className="flex-1 items-center justify-center mb-4">
             <Button title="Tomar o subir foto" onPress={handlePickImage} />
             {formData.foto_perfil && (
-              <Image source={{ uri: formData.foto_perfil }} style={{ width: 100, height: 100, marginTop: 10 }} />
+              <Image source={{ uri: formData.foto_perfil }} className="w-24 h-24 rounded-full mt-4" />
             )}
             {errors.foto_perfil && renderError(errors.foto_perfil)}
           </View>

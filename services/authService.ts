@@ -34,7 +34,7 @@ export const login = async (data:LoginRequest): Promise<Boolean> => {
         const response = await axios.post<UserResponse>('/api/users/login', data);
         console.log("Respuesta de login",response)
         if (response.status === 200) {
-            const user = response;
+            const user = response.data;
             await SecureStore.setItemAsync('userData', JSON.stringify(user));
             return true
         } else {
