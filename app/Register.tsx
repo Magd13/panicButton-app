@@ -447,7 +447,7 @@ export default function RegisterScreen() {
           <View className="flex-1 items-center justify-center mb-4">
             <Button title="Tomar o subir foto" onPress={handlePickImage} />
             {formData.foto_perfil && (
-              <Image source={{ uri: formData.foto_perfil }} className="w-24 h-24 rounded-full mt-4" />
+              <Image source={{ uri: `data:image/jpeg;base64,${formData.foto_perfil}` }} className="w-24 h-24 rounded-full mt-4" />
             )}
             {errors.foto_perfil && renderError(errors.foto_perfil)}
           </View>

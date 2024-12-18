@@ -80,9 +80,9 @@ export default function LoginScreen() {
       if (response)
         router.push('/(home)');
       else 
-      setErrors({cedula: 'Cédula o contraseña incorrectos'});
+      setErrors({contraseña: 'Cédula o contraseña incorrectos'});
     }catch {
-      setErrors({cedula: 'El número de cédula o la contraseña son incorrectos'})
+      setErrors({contraseña: 'El número de cédula o la contraseña son incorrectos'})
     }
 
   };
