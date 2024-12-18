@@ -103,6 +103,9 @@ export default function EditProfile() {
 
     const renderInput = (field: keyof FormData, label: string, icon: string, keyboardType = 'default', required = false) => (
         <View className="mb-4">
+            <Text className="text-gray-600 mb-1 font-medium">
+                {label} {required && <Text className="text-red-500">*</Text>}
+            </Text>
             <View className={`bg-white py-3 px-4 rounded-lg border ${errors[field] ? 'border-red-500' : 'border-gray-300'}`}>
                 <View className="flex-row items-center">
                     <Ionicons name={icon as any} size={20} color="#4b5563" className="mr-2" />
@@ -110,7 +113,7 @@ export default function EditProfile() {
                         className="flex-1 text-base text-gray-700"
                         value={formData[field]?.toString()}
                         onChangeText={text => setFormData(prev => ({ ...prev, [field]: text }))}
-                        placeholder={label}
+                        placeholder={`Ingresa ${label.toLowerCase()}`}
                         keyboardType={keyboardType as any}
                         autoCapitalize="none"
                     />
@@ -127,8 +130,12 @@ export default function EditProfile() {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             className="flex-1 bg-gray-100"
         >
-            <ScrollView className="flex-1 p-6">
-                <View className="items-center mb-6">
+            <ScrollView 
+                className="flex-1"
+                contentContainerStyle={{ padding: 24 }}
+                showsVerticalScrollIndicator={false}
+            >
+                <View className="items-center mb-8">
                     <Image
                         source={{
                             uri: formData.foto_perfil
@@ -139,37 +146,42 @@ export default function EditProfile() {
                     />
                     <TouchableOpacity
                         onPress={handlePickImage}
-                        className="mt-2 bg-blue-500 px-4 py-2 rounded-lg flex-row items-center"
+                        className="mt-3 bg-blue-500 px-4 py-2 rounded-lg flex-row items-center"
                     >
                         <Ionicons name="camera-outline" size={20} color="white" />
-                        <Text className="text-white ml-2">Cambiar foto</Text>
+                        <Text className="text-white ml-2 font-medium">Cambiar foto</Text>
                     </TouchableOpacity>
                 </View>
 
-                {renderInput('nombre', 'Nombre', 'person-outline')}
-                {renderInput('apellido', 'Apellido', 'person-outline')}
-                {renderInput('email', 'Email', 'mail-outline', 'email-address')}
-                {renderInput('telefono', 'Teléfono', 'call-outline', 'phone-pad')}
-                {renderInput('contacto_emergencia1', 'Contacto Emergencia 1', 'call-outline', 'phone-pad')}
-                {renderInput('contacto_emergencia2', 'Contacto Emergencia 2', 'call-outline', 'phone-pad')}
+                {renderInput('nombre', 'Nombre', 'person-outline', 'default', true)}
+                {renderInput('apellido', 'Apellido', 'person-outline', 'default', true)}
+                {renderInput('email', 'Email', 'mail-outline', 'email-address', true)}
+                {renderInput('telefono', 'Teléfono', 'call-outline', 'phone-pad', true)}
+                {renderInput('contacto_emergencia1', 'Contacto de Emergencia 1', 'call-outline', 'phone-pad', true)}
+                {renderInput('contacto_emergencia2', 'Contacto de Emergencia 2', 'call-outline', 'phone-pad')}
 
                 <View className="mb-4">
-                    <Picker
-                        selectedValue={formData.tipo_sangre}
-                        onValueChange={value => setFormData(prev => ({ ...prev, tipo_sangre: value }))}
-                        style={{ backgroundColor: 'white', borderRadius: 8 }}
-                    >
-                        <Picker.Item label="Seleccione el tipo de sangre" value="" />
-                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(tipo => (
-                            <Picker.Item key={tipo} label={tipo} value={tipo} />
-                        ))}
-                    </Picker>
+                    <Text className="text-gray-600 mb-1 font-medium">
+                        Tipo de Sangre <Text className="text-red-500">*</Text>
+                    </Text>
+                    <View className="bg-white rounded-lg border border-gray-300 overflow-hidden">
+                        <Picker
+                            selectedValue={formData.tipo_sangre}
+                            onValueChange={value => setFormData(prev => ({ ...prev, tipo_sangre: value }))}
+                            style={{ backgroundColor: 'white' }}
+                        >
+                            <Picker.Item label="Seleccione el tipo de sangre" value="" />
+                            {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(tipo => (
+                                <Picker.Item key={tipo} label={tipo} value={tipo} />
+                            ))}
+                        </Picker>
+                    </View>
                     {errors.tipo_sangre && (
                         <Text className="text-red-500 text-xs mt-1">{errors.tipo_sangre}</Text>
                     )}
                 </View>
 
-                <View className="mt-6 mb-12 px-4">
+                <View className="mt-8 mb-12">
                     {/* Botón de Guardar */}
                     <TouchableOpacity
                         className={`w-full bg-blue-600 p-4 rounded-xl shadow-lg flex-row justify-center items-center mb-4 ${loading ? 'opacity-50' : ''}`}
