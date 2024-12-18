@@ -1,7 +1,9 @@
-import { View, Text, ScrollView } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
 import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React from "react";
+import { getAllNotifications } from '../../services/notificationService';
+
 
 // Definición de tipos
 type TipoNotificacion = "informativa" | "alerta" | "emergencia";
@@ -129,29 +131,85 @@ const TarjetaNotificacion: React.FC<PropsTarjetaNotificacion> = ({ notificacion 
 export default function Historynotification() {
   const [notificaciones, setNotificaciones] = useState<Notificacion[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const fetchNotificaciones = async () => {
+    try {
+      const data = await getAllNotifications();
+      // Ordenar por fecha más reciente
+      const notificacionesOrdenadas = data.sort((a, b) => 
+        new Date(b.fecha + ' ' + b.hora).getTime() - 
+        new Date(a.fecha + ' ' + a.hora).getTime()
+      );
+      setNotificaciones(notificacionesOrdenadas);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al cargar las notificaciones');
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
+  };
+
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotificaciones();
+  };
 
   useEffect(() => {
-    // Aquí podrías cargar las notificaciones desde tu API
-    setNotificaciones(notificacionesEjemplo);
-    setLoading(false);
+    fetchNotificaciones();
   }, []);
+
+  if (error) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <Text className="text-red-500 mb-4">Error: {error}</Text>
+        <TouchableOpacity 
+          className="bg-blue-500 px-6 py-3 rounded-lg"
+          onPress={fetchNotificaciones}
+        >
+          <Text className="text-white font-medium">Reintentar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loading) {
+    return (
+      <View className="flex-1 justify-center items-center bg-gray-50">
+        <ActivityIndicator size="large" color="#0000ff" />
+        <Text className="mt-4 text-gray-600">Cargando notificaciones...</Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-gray-50">
-      {loading ? (
-        <View className="flex-1 justify-center items-center">
-          <Text>Cargando notificaciones...</Text>
-        </View>
-      ) : (
-        <ScrollView className="flex-1 px-4 py-4">
-          {notificaciones.map((notificacion) => (
+      <ScrollView 
+        className="flex-1 px-4 py-4"
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={["#0000ff"]}
+          />
+        }
+      >
+        {notificaciones.length === 0 ? (
+          <View className="flex-1 justify-center items-center py-8">
+            <Text className="text-gray-500 text-lg">No hay notificaciones disponibles</Text>
+          </View>
+        ) : (
+          notificaciones.map((notificacion) => (
             <TarjetaNotificacion 
               key={notificacion.id} 
               notificacion={notificacion} 
             />
-          ))}
-        </ScrollView>
-      )}
+          ))
+        )}
+      </ScrollView>
     </View>
   );
 }
