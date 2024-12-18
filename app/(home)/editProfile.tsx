@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     View,
     Text,
@@ -9,18 +9,22 @@ import {
     ActivityIndicator,
     Image,
     KeyboardAvoidingView,
-    Platform
+    Platform,
+    TouchableWithoutFeedback,
+    Keyboard
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { updateUserProfile } from '../../services/userService';
 
+import { Picker } from '@react-native-picker/picker';
 interface FormData {
     nombre: string;
     apellido: string;
     email: string;
     telefono: string;
+    fecha_registro: Date;
     contacto_emergencia1: string;
     contacto_emergencia2: string;
     tipo_sangre: string;
@@ -31,14 +35,19 @@ export default function EditProfile() {
     const router = useRouter();
     const params = useLocalSearchParams();
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState<{ [key: string]: string }>({});
+
+   
 
     const [formData, setFormData] = useState<FormData>(() => {
         const userData = JSON.parse(params.userData as string);
         return {
             nombre: userData.nombre?.toString() || '',
             apellido: userData.apellido?.toString() || '',
+            cedula:userData.cedula?.toString() || '',
             email: userData.email?.toString() || '',
             telefono: userData.telefono?.toString() || '',
+            fecha_registro: userData.fecha_registro  ? new Date(userData.fecha_registro) : new Date(),
             contacto_emergencia1: userData.contacto_emergencia1?.toString() || '',
             contacto_emergencia2: userData.contacto_emergencia2?.toString() || '',
             tipo_sangre: userData.tipo_sangre?.toString() || '',
@@ -63,6 +72,10 @@ export default function EditProfile() {
             Alert.alert('Error', 'El teléfono debe tener al menos 10 dígitos');
             return false;
         }
+        if (!formData.tipo_sangre) {
+            Alert.alert('Error', 'El tipo de sangre es obligatorio');
+            return false;
+        }
         return true;
     };
 
@@ -85,7 +98,7 @@ export default function EditProfile() {
             if (!result.canceled && result.assets[0].base64) {
                 setFormData(prev => ({
                     ...prev,
-                    foto_perfil: result.assets[0].base64
+                    foto_perfil: result.assets[0].base64 || ''
                 }));
             }
         } catch (error) {
@@ -98,7 +111,13 @@ export default function EditProfile() {
         
         try {
             setLoading(true);
-            const updatedUser = await updateUserProfile(JSON.parse(params.userData as string).cedula, formData);
+
+            const updatedFormData = {
+                ...formData,
+                fecha_registro: new Date().toISOString().split('T')[0]
+            };
+
+            const updatedUser = await updateUserProfile(JSON.parse(params.userData as string).cedula, updatedFormData);
             
             Alert.alert(
                 'Éxito',
@@ -121,6 +140,44 @@ export default function EditProfile() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const BloodTypeField = ({ value, onChange, error }: any) => {
+        return (
+            <View className="mb-4">
+                <Text className="text-gray-600 mb-1">
+                    Tipo de Sangre <Text className="text-red-500">*</Text>
+                </Text>
+                <View className="flex-row items-center bg-white rounded-lg border border-gray-300">
+                    {/* Ícono a la izquierda */}
+                    <View className="p-3">
+                        <Ionicons name="water-outline" size={20} color="#4b5563" />
+                    </View>
+                    {/* Picker */}
+                    <Picker
+                        selectedValue={value}
+                        onValueChange={(itemValue) => onChange(itemValue)}
+                        style={{ flex: 1, height: 50 }}
+                    >
+                        <Picker.Item label="Seleccione el tipo de sangre" value="" />
+                        <Picker.Item label="A+" value="A+" />
+                        <Picker.Item label="A-" value="A-" />
+                        <Picker.Item label="B+" value="B+" />
+                        <Picker.Item label="B-" value="B-" />
+                        <Picker.Item label="AB+" value="AB+" />
+                        <Picker.Item label="AB-" value="AB-" />
+                        <Picker.Item label="O+" value="O+" />
+                        <Picker.Item label="O-" value="O-" />
+                    </Picker>
+                </View>
+                {/* Mostrar error si existe */}
+                {error && <Text className="text-red-500 text-xs mt-1">{error}</Text>}
+            </View>
+        );
+    };
+
+    const handleInputChange = (name: string, value: any) => {
+        setFormData({ ...formData, [name]: value });
     };
 
     const InputField = ({ 
@@ -150,10 +207,10 @@ export default function EditProfile() {
                 </View>
                 <TextInput
                     className="flex-1 p-2 text-base text-gray-700"
-                    value={formData[field]}
+                    value={field === 'fecha_registro' ? formData?.[field]?.toLocaleDateString() || '' : formData?.[field] || ''}
                     onChangeText={(text) => setFormData(prev => ({ ...prev, [field]: text }))}
                     keyboardType={keyboardType}
-                    editable={!loading}
+                    editable={!loading && field !== 'fecha_registro'} 
                     placeholder={`Ingresa ${label.toLowerCase()}`}
                 />
             </View>
@@ -161,11 +218,10 @@ export default function EditProfile() {
     );
 
     return (
-        <KeyboardAvoidingView 
-            behavior={Platform.OS === "ios" ? "padding" : "height"}
-            className="flex-1"
-        >
-            <ScrollView className="flex-1 bg-gray-50">
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? "padding" : "height"} style={{ flex: 1 }}>
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <ScrollView  contentContainerStyle={{ flexGrow: 1 }}
+                        keyboardShouldPersistTaps="handled">
                 <View className="p-4">
                     {/* Foto de perfil */}
                     <View className="items-center mb-6">
@@ -227,11 +283,10 @@ export default function EditProfile() {
                         icon="call-outline"
                         keyboardType="phone-pad"
                     />
-                    <InputField
-                        field="tipo_sangre"
-                        label="Tipo de Sangre"
-                        icon="water-outline"
-                        required
+                    <BloodTypeField
+                        value={formData.tipo_sangre}
+                        onChange={(value: any) => handleInputChange('tipo_sangre', value)}
+                        error={errors.tipo_sangre}
                     />
 
                     {/* Botones */}
@@ -266,6 +321,7 @@ export default function EditProfile() {
                     </View>
                 </View>
             </ScrollView>
+        </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }

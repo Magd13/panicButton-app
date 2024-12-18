@@ -11,17 +11,9 @@ import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { getAllAlerts, deleteAlert } from '../../services/alertService';
 import * as Location from 'expo-location';
-
+import {AlertResponse} from '../../services/alertService';
 // Interfaces
-interface Alert {
-  id: number;
-  usuarioId: number;
-  tipo_alert: "Emergencia" | "Precaución";
-  mensaje: string;
-  latitud: number;
-  longitud: number;
-  fecha_alerta: string;
-}
+
 
 interface AlertaUI {
   id: number;
@@ -125,7 +117,7 @@ const TarjetaAlerta: React.FC<PropsTarjetaAlerta> = ({ alerta, onDelete }) => {
 
 // Componente principal Historyalerts
 export default function Historyalerts() {
-  const [alertas, setAlertas] = useState<Alert[]>([]);
+  const [alertas, setAlertas] = useState<AlertResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -216,7 +208,7 @@ export default function Historyalerts() {
   };
 
   // Función para convertir los datos de la API al formato de la UI
-  const convertirAlerta = (alerta: Alert): AlertaUI => ({
+  const convertirAlerta = (alerta: AlertResponse): AlertaUI => ({
     id: alerta.id,
     tipo: convertirTipoAlerta(alerta.tipo_alert),
     fecha: formatearFecha(alerta.fecha_alerta),

@@ -16,23 +16,19 @@ interface RegisterRequest {
 }
 
 interface UserResponse {
-    user: {
-        id: string;
-        nombre: string;
-        apellido: string;
-        cedula: string;
-        email: string;
-        telefono: string;
-        contraseña: string;
-        fecha_registro: string;
-    }
+    id: string;
+    nombre: string;
+    apellido: string;
+    cedula: string;
+    email: string;
+    telefono: string;
+    contraseña: string;
+    fecha_registro: string; 
 }
 
 export const login = async (data:LoginRequest): Promise<Boolean> => {
     try {
-        console.log('Envio de front:',data)
         const response = await axios.post<UserResponse>('/api/users/login', data);
-        console.log("Respuesta de login",response)
         if (response.status === 200) {
             const user = response.data;
             await SecureStore.setItemAsync('userData', JSON.stringify(user));
@@ -51,9 +47,7 @@ export const login = async (data:LoginRequest): Promise<Boolean> => {
 
 export const register = async (data: RegisterRequest): Promise<UserResponse> => {
     try {
-        console.log('Envio de front:', data);
         const response = await axios.post<UserResponse>('/api/users/register', data);
-        console.log(response.data);
         return response.data;
     } catch (error: any) {
         if (error.response) {

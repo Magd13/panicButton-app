@@ -99,13 +99,16 @@ export const updateUserProfile = async (cedula: string, data: Partial<UserData>)
         const updateData = {
             nombre: data.nombre,
             apellido: data.apellido,
+            cedula:data.cedula,
             email: data.email,
             telefono: data.telefono,
+            fecha_registo: data.fecha_registro,
             contacto_emergencia1: data.contacto_emergencia1,
             contacto_emergencia2: data.contacto_emergencia2,
-            tipo_sangre: data.tipo_sangre
+            tipo_sangre: data.tipo_sangre,
+            foto_perfil:data.foto_perfil
         };
-
+        console.log("fecha",data.fecha_registro)
         // Solo incluir foto_perfil si se modificó
         if (data.foto_perfil) {
             updateData['foto_perfil'] = compressImage(data.foto_perfil);
@@ -114,7 +117,7 @@ export const updateUserProfile = async (cedula: string, data: Partial<UserData>)
         console.log('Enviando actualización:', updateData);
 
         const response = await axios.put<UserData>(
-            `/api/users/${cedula}`,
+            `/api/users/${data.cedula}`,
             updateData,
             {
                 headers: {

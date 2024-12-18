@@ -1,6 +1,7 @@
 import axios from './axiosClient';
 import * as SecureStore from 'expo-secure-store';
 import * as Location from 'expo-location';
+import { Double } from 'react-native/Libraries/Types/CodegenTypes';
 
 // Interfaces para las alertas
 interface AlertRequest {
@@ -12,14 +13,16 @@ interface AlertRequest {
     fecha_alerta?: string;
 }
 
-export interface Alert {
-    id: number;
+export interface AlertResponse {
+    id:number;
     usuarioId: number;
-    tipo_alert: "Emergencia" | "Precaución";
-    mensaje: string;
-    latitud: number;
-    longitud: number;
-    fecha_alerta: string;
+    tipo_alert:string;
+    mensaje:string;
+    latitud:Double;
+    longitud:Double;
+    fecha_alerta:string;
+    estado_alerta:boolean;
+    foto_usuario:string;
 }
 
 // Obtener usuario actual del SecureStore
@@ -30,9 +33,9 @@ const getCurrentUser = async () => {
 };
 
 // Crear una nueva alerta
-export const createAlert = async (data: AlertRequest): Promise<Alert> => {
+export const createAlert = async (data: AlertRequest): Promise<AlertResponse> => {
     try {
-        const response = await axios.post<Alert>('/api/alerts/register', data);
+        const response = await axios.post<AlertResponse>('/api/alerts/register', data);
         return response.data;
     } catch (error: any) {
         if (error.response) {
@@ -44,9 +47,9 @@ export const createAlert = async (data: AlertRequest): Promise<Alert> => {
 };
 
 // Obtener todas las alertas (para el feed general)
-export const getAllAlerts = async (): Promise<Alert[]> => {
+export const getAllAlerts = async (): Promise<AlertResponse[]> => {
     try {
-        const response = await axios.get<Alert[]>('/api/alerts/');
+        const response = await axios.get<AlertResponse[]>('/api/alerts/');
         return response.data.sort((a, b) => 
             new Date(b.fecha_alerta).getTime() - new Date(a.fecha_alerta).getTime()
         );
@@ -60,9 +63,9 @@ export const getAllAlerts = async (): Promise<Alert[]> => {
 };
 
 // Obtener una alerta específica
-export const getAlertById = async (id: number): Promise<Alert> => {
+export const getAlertById = async (id: number): Promise<AlertResponse> => {
     try {
-        const response = await axios.get<Alert>(`/api/alerts/${id}`);
+        const response = await axios.get<AlertResponse>(`/api/alerts/${id}`);
         return response.data;
     } catch (error: any) {
         if (error.response) {
@@ -74,10 +77,10 @@ export const getAlertById = async (id: number): Promise<Alert> => {
 };
 
 // Obtener alertas del usuario actual
-export const getUserAlerts = async (): Promise<Alert[]> => {
+export const getUserAlerts = async (): Promise<AlertResponse[]> => {
     try {
         const user = await getCurrentUser();
-        const response = await axios.get<Alert[]>(`/api/alerts/user/${user.id}`);
+        const response = await axios.get<AlertResponse[]>(`/api/alerts/user/${user.id}`);
         return response.data.sort((a, b) => 
             new Date(b.fecha_alerta).getTime() - new Date(a.fecha_alerta).getTime()
         );
@@ -91,9 +94,9 @@ export const getUserAlerts = async (): Promise<Alert[]> => {
 };
 
 // Actualizar una alerta
-export const updateAlert = async (id: number, data: Partial<AlertRequest>): Promise<Alert> => {
+export const updateAlert = async (id: number, data: Partial<AlertRequest>): Promise<AlertResponse> => {
     try {
-        const response = await axios.put<Alert>(`/api/alerts/${id}`, data);
+        const response = await axios.put<AlertResponse>(`/api/alerts/${id}`, data);
         return response.data;
     } catch (error: any) {
         if (error.response) {
@@ -136,7 +139,7 @@ const getCurrentLocation = async (): Promise<{ latitude: number; longitude: numb
 };
 
 // Crear una alerta de emergencia con la ubicación actual
-export const createEmergencyAlert = async (mensaje?: string): Promise<Alert> => {
+export const createEmergencyAlert = async (mensaje?: string): Promise<AlertResponse> => {
     try {
         const user = await getCurrentUser();
         const location = await getCurrentLocation();
@@ -156,7 +159,7 @@ export const createEmergencyAlert = async (mensaje?: string): Promise<Alert> => 
 };
 
 // Obtener alertas cercanas
-export const getNearbyAlerts = async (radio: number = 5): Promise<Alert[]> => {
+export const getNearbyAlerts = async (radio: number = 5): Promise<AlertResponse[]> => {
     try {
         const location = await getCurrentLocation();
         const allAlerts = await getAllAlerts();

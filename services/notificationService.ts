@@ -1,9 +1,9 @@
 // notificationService.ts
 import axios from './axiosClient';
-import { Alert } from './alertService'; // Importa la interfaz Alert de tu alertService
+import { AlertResponse } from './alertService'; // Importa la interfaz Alert de tu alertService
 
 // Interfaces para el servicio de notificaciones
-export interface Notificacion {
+export interface Notificacions {
   id: number;
   tipo: "informativa" | "alerta" | "emergencia";
   fecha: string;
@@ -14,7 +14,7 @@ export interface Notificacion {
 }
 
 // Función para convertir una alerta en notificación
-const convertirAlertaANotificacion = (alerta: Alert): Notificacion => {
+const convertirAlertaANotificacion = (alerta: AlertResponse): Notificacions => {
   const fecha = new Date(alerta.fecha_alerta);
   
   return {
@@ -36,9 +36,9 @@ const convertirAlertaANotificacion = (alerta: Alert): Notificacion => {
 };
 
 // Obtener todas las notificaciones
-export const getAllNotifications = async (): Promise<Notificacion[]> => {
+export const getAllNotifications = async (): Promise<Notificacions[]> => {
   try {
-    const response = await axios.get<Alert[]>('/api/alerts/');
+    const response = await axios.get<AlertResponse[]>('/api/alerts/');
     return response.data.map(convertirAlertaANotificacion);
   } catch (error: any) {
     throw new Error('Error al obtener las notificaciones');

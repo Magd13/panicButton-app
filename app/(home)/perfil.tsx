@@ -20,6 +20,7 @@ interface UserData {
     apellido: string;
     email: string;
     telefono: string;
+    fecha_registro: string;
     fecha_nacimiento: string;
     contacto_emergencia1: string;
     contacto_emergencia2: string;
@@ -69,7 +70,6 @@ export default function Perfil() {
 
     const handleEditProfile = () => {
         if (userData) {
-            // Con Expo Router, la navegación es diferente
             router.push({
                 pathname: "/editProfile",
                 params: {

@@ -2,7 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshCon
 import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React from "react";
-import { getAllNotifications, Notificacion } from '../../services/notificationService';
+import { getAllNotifications } from '../../services/notificationService';
 
 
 // Definición de tipos
