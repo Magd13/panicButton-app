@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
     View,
     Text,
@@ -10,21 +10,22 @@ import {
     Image,
     KeyboardAvoidingView,
     Platform,
-    TouchableWithoutFeedback,
-    Keyboard
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
+import * as SecureStore from 'expo-secure-store';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { updateUserProfile } from '../../services/userService';
-
 import { Picker } from '@react-native-picker/picker';
+
 interface FormData {
     nombre: string;
     apellido: string;
+    cedula: string;
     email: string;
     telefono: string;
     fecha_registro: Date;
+    fecha_nacimiento: string;
     contacto_emergencia1: string;
     contacto_emergencia2: string;
     tipo_sangre: string;
@@ -36,48 +37,10 @@ export default function EditProfile() {
     const params = useLocalSearchParams();
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState<{ [key: string]: string }>({});
-
-   
-
-    const [formData, setFormData] = useState<FormData>(() => {
-        const userData = JSON.parse(params.userData as string);
-        return {
-            nombre: userData.nombre?.toString() || '',
-            apellido: userData.apellido?.toString() || '',
-            cedula:userData.cedula?.toString() || '',
-            email: userData.email?.toString() || '',
-            telefono: userData.telefono?.toString() || '',
-            fecha_registro: userData.fecha_registro  ? new Date(userData.fecha_registro) : new Date(),
-            contacto_emergencia1: userData.contacto_emergencia1?.toString() || '',
-            contacto_emergencia2: userData.contacto_emergencia2?.toString() || '',
-            tipo_sangre: userData.tipo_sangre?.toString() || '',
-            foto_perfil: userData.foto_perfil?.toString() || ''
-        };
-    });
-
-    const validateForm = () => {
-        if (!formData.nombre.trim()) {
-            Alert.alert('Error', 'El nombre es obligatorio');
-            return false;
-        }
-        if (!formData.apellido.trim()) {
-            Alert.alert('Error', 'El apellido es obligatorio');
-            return false;
-        }
-        if (!formData.email.includes('@')) {
-            Alert.alert('Error', 'Ingresa un email válido');
-            return false;
-        }
-        if (formData.telefono.length < 10) {
-            Alert.alert('Error', 'El teléfono debe tener al menos 10 dígitos');
-            return false;
-        }
-        if (!formData.tipo_sangre) {
-            Alert.alert('Error', 'El tipo de sangre es obligatorio');
-            return false;
-        }
-        return true;
-    };
+    const [formData, setFormData] = useState<FormData>(() => ({
+        ...JSON.parse(params.userData as string),
+        fecha_registro: new Date()
+    }));
 
     const handlePickImage = async () => {
         try {
@@ -98,7 +61,7 @@ export default function EditProfile() {
             if (!result.canceled && result.assets[0].base64) {
                 setFormData(prev => ({
                     ...prev,
-                    foto_perfil: result.assets[0].base64 || ''
+                    foto_perfil: result.assets[0].base64
                 }));
             }
         } catch (error) {
@@ -107,221 +70,135 @@ export default function EditProfile() {
     };
 
     const handleUpdate = async () => {
-        if (!validateForm()) return;
-        
+        const newErrors: { [key: string]: string } = {};
+        if (!formData.nombre.trim()) newErrors.nombre = 'El nombre es obligatorio';
+        if (!formData.apellido.trim()) newErrors.apellido = 'El apellido es obligatorio';
+        if (!formData.email.includes('@')) newErrors.email = 'Email inválido';
+        if (formData.telefono.length < 10) newErrors.telefono = 'Teléfono inválido';
+        if (!formData.tipo_sangre) newErrors.tipo_sangre = 'Tipo de sangre es obligatorio';
+
+        setErrors(newErrors);
+        if (Object.keys(newErrors).length > 0) return;
+
         try {
             setLoading(true);
-
-            const updatedFormData = {
+            const userData = JSON.parse(params.userData as string);
+            const updatedData = {
                 ...formData,
+                fecha_nacimiento: userData.fecha_nacimiento,
                 fecha_registro: new Date().toISOString().split('T')[0]
             };
 
-            const updatedUser = await updateUserProfile(JSON.parse(params.userData as string).cedula, updatedFormData);
-            
-            Alert.alert(
-                'Éxito',
-                'Perfil actualizado correctamente',
-                [
-                    {
-                        text: 'OK',
-                        onPress: () => {
-                            router.back();
-                        }
-                    }
-                ]
-            );
+            await updateUserProfile(formData.cedula, updatedData);
+            await SecureStore.setItemAsync('userData', JSON.stringify(updatedData));
+            Alert.alert('Éxito', 'Perfil actualizado correctamente', [
+                { text: 'OK', onPress: () => router.replace('/perfil') }
+            ]);
         } catch (error) {
-            console.error('Error al actualizar:', error);
-            Alert.alert(
-                'Error',
-                error instanceof Error ? error.message : 'No se pudo actualizar el perfil'
-            );
+            Alert.alert('Error', 'No se pudo actualizar el perfil');
         } finally {
             setLoading(false);
         }
     };
 
-    const BloodTypeField = ({ value, onChange, error }: any) => {
-        return (
-            <View className="mb-4">
-                <Text className="text-gray-600 mb-1">
-                    Tipo de Sangre <Text className="text-red-500">*</Text>
-                </Text>
-                <View className="flex-row items-center bg-white rounded-lg border border-gray-300">
-                    {/* Ícono a la izquierda */}
-                    <View className="p-3">
-                        <Ionicons name="water-outline" size={20} color="#4b5563" />
-                    </View>
-                    {/* Picker */}
-                    <Picker
-                        selectedValue={value}
-                        onValueChange={(itemValue) => onChange(itemValue)}
-                        style={{ flex: 1, height: 50 }}
-                    >
-                        <Picker.Item label="Seleccione el tipo de sangre" value="" />
-                        <Picker.Item label="A+" value="A+" />
-                        <Picker.Item label="A-" value="A-" />
-                        <Picker.Item label="B+" value="B+" />
-                        <Picker.Item label="B-" value="B-" />
-                        <Picker.Item label="AB+" value="AB+" />
-                        <Picker.Item label="AB-" value="AB-" />
-                        <Picker.Item label="O+" value="O+" />
-                        <Picker.Item label="O-" value="O-" />
-                    </Picker>
-                </View>
-                {/* Mostrar error si existe */}
-                {error && <Text className="text-red-500 text-xs mt-1">{error}</Text>}
-            </View>
-        );
-    };
-
-    const handleInputChange = (name: string, value: any) => {
-        setFormData({ ...formData, [name]: value });
-    };
-
-    const InputField = ({ 
-        field,
-        label,
-        icon,
-        keyboardType = 'default',
-        required = false
-    }: {
-        field: keyof FormData;
-        label: string;
-        icon: string;
-        keyboardType?: 'default' | 'email-address' | 'phone-pad';
-        required?: boolean;
-    }) => (
+    const renderInput = (field: keyof FormData, label: string, icon: string, keyboardType = 'default', required = false) => (
         <View className="mb-4">
-            <Text className="text-gray-600 mb-1">
-                {label} {required && <Text className="text-red-500">*</Text>}
-            </Text>
-            <View className="flex-row items-center bg-white rounded-lg border border-gray-300">
-                <View className="p-2">
-                    <Ionicons 
-                        name={icon as any} 
-                        size={20} 
-                        color="#4b5563"
+            <View className={`bg-white py-3 px-4 rounded-lg border ${errors[field] ? 'border-red-500' : 'border-gray-300'}`}>
+                <View className="flex-row items-center">
+                    <Ionicons name={icon as any} size={20} color="#4b5563" className="mr-2" />
+                    <TextInput
+                        className="flex-1 text-base text-gray-700"
+                        value={formData[field]?.toString()}
+                        onChangeText={text => setFormData(prev => ({ ...prev, [field]: text }))}
+                        placeholder={label}
+                        keyboardType={keyboardType as any}
+                        autoCapitalize="none"
                     />
                 </View>
-                <TextInput
-                    className="flex-1 p-2 text-base text-gray-700"
-                    value={field === 'fecha_registro' ? formData?.[field]?.toLocaleDateString() || '' : formData?.[field] || ''}
-                    onChangeText={(text) => setFormData(prev => ({ ...prev, [field]: text }))}
-                    keyboardType={keyboardType}
-                    editable={!loading && field !== 'fecha_registro'} 
-                    placeholder={`Ingresa ${label.toLowerCase()}`}
-                />
             </View>
+            {errors[field] && (
+                <Text className="text-red-500 text-xs mt-1">{errors[field]}</Text>
+            )}
         </View>
     );
 
     return (
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? "padding" : "height"} style={{ flex: 1 }}>
-        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <ScrollView  contentContainerStyle={{ flexGrow: 1 }}
-                        keyboardShouldPersistTaps="handled">
-                <View className="p-4">
-                    {/* Foto de perfil */}
-                    <View className="items-center mb-6">
-                        <Image
-                            source={{ 
-                                uri: formData.foto_perfil 
-                                    ? `data:image/jpeg;base64,${formData.foto_perfil}`
-                                    : 'https://via.placeholder.com/150'
-                            }}
-                            className="w-32 h-32 rounded-full border-4 border-blue-600"
-                        />
-                        <TouchableOpacity 
-                            onPress={handlePickImage}
-                            className="mt-2 bg-blue-500 px-4 py-2 rounded-lg flex-row items-center"
-                            disabled={loading}
-                        >
-                            <Ionicons name="camera-outline" size={20} color="white" />
-                            <Text className="text-white ml-2">Cambiar foto</Text>
-                        </TouchableOpacity>
-                    </View>
+        <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            className="flex-1 bg-gray-100"
+        >
+            <ScrollView className="flex-1 p-6">
+                <View className="items-center mb-6">
+                    <Image
+                        source={{
+                            uri: formData.foto_perfil
+                                ? `data:image/jpeg;base64,${formData.foto_perfil}`
+                                : 'https://via.placeholder.com/150'
+                        }}
+                        className="w-32 h-32 rounded-full border-4 border-blue-600"
+                    />
+                    <TouchableOpacity
+                        onPress={handlePickImage}
+                        className="mt-2 bg-blue-500 px-4 py-2 rounded-lg flex-row items-center"
+                    >
+                        <Ionicons name="camera-outline" size={20} color="white" />
+                        <Text className="text-white ml-2">Cambiar foto</Text>
+                    </TouchableOpacity>
+                </View>
 
-                    {/* Campos del formulario */}
-                    <InputField
-                        field="nombre"
-                        label="Nombre"
-                        icon="person-outline"
-                        required
-                    />
-                    <InputField
-                        field="apellido"
-                        label="Apellido"
-                        icon="person-outline"
-                        required
-                    />
-                    <InputField
-                        field="email"
-                        label="Email"
-                        icon="mail-outline"
-                        keyboardType="email-address"
-                        required
-                    />
-                    <InputField
-                        field="telefono"
-                        label="Teléfono"
-                        icon="call-outline"
-                        keyboardType="phone-pad"
-                        required
-                    />
-                    <InputField
-                        field="contacto_emergencia1"
-                        label="Contacto de Emergencia 1"
-                        icon="call-outline"
-                        keyboardType="phone-pad"
-                        required
-                    />
-                    <InputField
-                        field="contacto_emergencia2"
-                        label="Contacto de Emergencia 2"
-                        icon="call-outline"
-                        keyboardType="phone-pad"
-                    />
-                    <BloodTypeField
-                        value={formData.tipo_sangre}
-                        onChange={(value: any) => handleInputChange('tipo_sangre', value)}
-                        error={errors.tipo_sangre}
-                    />
+                {renderInput('nombre', 'Nombre', 'person-outline')}
+                {renderInput('apellido', 'Apellido', 'person-outline')}
+                {renderInput('email', 'Email', 'mail-outline', 'email-address')}
+                {renderInput('telefono', 'Teléfono', 'call-outline', 'phone-pad')}
+                {renderInput('contacto_emergencia1', 'Contacto Emergencia 1', 'call-outline', 'phone-pad')}
+                {renderInput('contacto_emergencia2', 'Contacto Emergencia 2', 'call-outline', 'phone-pad')}
 
-                    {/* Botones */}
-                    <View className="mt-6 space-y-3">
-                        <TouchableOpacity
-                            className={`bg-blue-600 p-4 rounded-lg flex-row justify-center items-center ${loading ? 'opacity-50' : ''}`}
-                            onPress={handleUpdate}
-                            disabled={loading}
-                        >
-                            {loading ? (
-                                <ActivityIndicator color="white" />
-                            ) : (
-                                <>
-                                    <Ionicons name="save-outline" size={20} color="white" />
-                                    <Text className="text-white font-semibold ml-2">
-                                        Guardar Cambios
-                                    </Text>
-                                </>
-                            )}
-                        </TouchableOpacity>
+                <View className="mb-4">
+                    <Picker
+                        selectedValue={formData.tipo_sangre}
+                        onValueChange={value => setFormData(prev => ({ ...prev, tipo_sangre: value }))}
+                        style={{ backgroundColor: 'white', borderRadius: 8 }}
+                    >
+                        <Picker.Item label="Seleccione el tipo de sangre" value="" />
+                        {['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'].map(tipo => (
+                            <Picker.Item key={tipo} label={tipo} value={tipo} />
+                        ))}
+                    </Picker>
+                    {errors.tipo_sangre && (
+                        <Text className="text-red-500 text-xs mt-1">{errors.tipo_sangre}</Text>
+                    )}
+                </View>
 
-                        <TouchableOpacity
-                            className="bg-gray-500 p-4 rounded-lg flex-row justify-center items-center"
-                            onPress={() => router.back()}
-                            disabled={loading}
-                        >
-                            <Ionicons name="close-outline" size={20} color="white" />
-                            <Text className="text-white font-semibold ml-2">
-                                Cancelar
-                            </Text>
-                        </TouchableOpacity>
-                    </View>
+                <View className="mt-6 mb-12 px-4">
+                    {/* Botón de Guardar */}
+                    <TouchableOpacity
+                        className={`w-full bg-blue-600 p-4 rounded-xl shadow-lg flex-row justify-center items-center mb-4 ${loading ? 'opacity-50' : ''}`}
+                        onPress={handleUpdate}
+                        disabled={loading}
+                    >
+                        {loading ? <ActivityIndicator color="white" /> : (
+                            <>
+                                <Ionicons name="save-outline" size={24} color="white" />
+                                <Text className="text-white font-bold text-lg ml-2">
+                                    Guardar Cambios
+                                </Text>
+                            </>
+                        )}
+                    </TouchableOpacity>
+
+                    {/* Botón de Cancelar */}
+                    <TouchableOpacity
+                        className="w-full bg-white border-2 border-gray-300 p-4 rounded-xl shadow-sm flex-row justify-center items-center"
+                        onPress={() => router.back()}
+                        disabled={loading}
+                    >
+                        <Ionicons name="close-outline" size={24} color="#4B5563" />
+                        <Text className="text-gray-600 font-bold text-lg ml-2">
+                            Cancelar
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             </ScrollView>
-        </TouchableWithoutFeedback>
         </KeyboardAvoidingView>
     );
 }

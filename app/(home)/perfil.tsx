@@ -1,19 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState, useCallback } from "react";
 import { 
     View, 
     Text, 
     Image, 
     TouchableOpacity, 
     Alert, 
-    ActivityIndicator 
+    ActivityIndicator,
+    RefreshControl,
+    ScrollView
 } from "react-native";
 import * as SecureStore from 'expo-secure-store';
-import { useRouter } from "expo-router";
+import { useRouter, useFocusEffect } from "expo-router";
 import { logout } from '../../services/userService';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 
-// Interfaz para los datos del usuario
 interface UserData {
     id: number;
     cedula: string;
@@ -32,6 +33,7 @@ interface UserData {
 export default function Perfil() {
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
     const router = useRouter();
     const navigation = useNavigation();
 
@@ -53,21 +55,44 @@ export default function Perfil() {
         }
     };
 
-    useEffect(() => {
-        loadDataUser();
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true);
+        await loadDataUser();
+        setRefreshing(false);
     }, []);
 
-    const calculateAge = (birthDate: string) => {
-        const birth = new Date(birthDate);
-        const today = new Date();
-        let age = today.getFullYear() - birth.getFullYear();
-        const monthDiff = today.getMonth() - birth.getMonth();
+    useFocusEffect(
+        useCallback(() => {
+            loadDataUser();
+        }, [])
+    );
+
+    const calculateAge = (birthDate: string | null | undefined) => {
+        if (!birthDate) return 'N/A';
         
-        if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-            age--;
+        try {
+            const birth = new Date(birthDate);
+            
+            // Validar que la fecha sea válida
+            if (isNaN(birth.getTime())) return 'N/A';
+            
+            const today = new Date();
+            let age = today.getFullYear() - birth.getFullYear();
+            const monthDiff = today.getMonth() - birth.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+                age--;
+            }
+            
+            return age >= 0 ? age : 'N/A';
+        } catch (error) {
+            console.error('Error calculando edad:', error);
+            return 'N/A';
         }
-        
-        return age;
+    };
+
+    const getDefaultProfileImage = () => {
+        return 'https://w7.pngwing.com/pngs/178/595/png-transparent-user-profile-computer-icons-login-user-avatars-thumbnail.png';
     };
 
     const handleEditProfile = () => {
@@ -80,6 +105,7 @@ export default function Perfil() {
             });
         }
     };
+
     const handleLogout = async () => {
         Alert.alert(
             "Cerrar Sesión",
@@ -94,10 +120,11 @@ export default function Perfil() {
                     onPress: async () => {
                         try {
                             await logout();
+                            await SecureStore.deleteItemAsync('userData'); // Limpiar datos al cerrar sesión
                             navigation.reset({
-                            index: 0,
-                            routes: [{ name: 'Login' }] 
-                        });
+                                index: 0,
+                                routes: [{ name: 'Login' }] 
+                            });
                         } catch (error) {
                             Alert.alert('Error', 'No se pudo cerrar sesión');
                         }
@@ -131,8 +158,21 @@ export default function Perfil() {
         );
     }
 
+    const displayAge = calculateAge(userData.fecha_nacimiento);
+    const ageText = displayAge === 'N/A' ? 'No disponible' : `${displayAge} años`;
+
     return (
-        <View className="flex-1 bg-gray-100">
+        <ScrollView 
+            className="flex-1 bg-gray-100"
+            refreshControl={
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    colors={["#3b82f6"]}
+                    tintColor="#3b82f6"
+                />
+            }
+        >
             {/* Header con foto de perfil y datos principales */}
             <View className="bg-white p-6 shadow-sm">
                 <View className="flex-row items-center">
@@ -140,7 +180,7 @@ export default function Perfil() {
                         source={{ 
                             uri: userData.foto_perfil 
                                 ? `data:image/jpeg;base64,${userData.foto_perfil}`
-                                : '/api/placeholder/96/96'
+                                : getDefaultProfileImage()
                         }}
                         className="w-24 h-24 rounded-full border-4 border-blue-600"
                     />
@@ -165,25 +205,25 @@ export default function Perfil() {
                         <View className="flex-row items-center">
                             <Ionicons name="calendar-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                Edad: {calculateAge(userData.fecha_nacimiento)} años
+                                Edad: {ageText}
                             </Text>
                         </View>
                         <View className="flex-row items-center">
                             <Ionicons name="water-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                Tipo de Sangre: {userData.tipo_sangre}
+                                Tipo de Sangre: {userData.tipo_sangre || 'No especificado'}
                             </Text>
                         </View>
                         <View className="flex-row items-center">
                             <Ionicons name="call-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                Teléfono: {userData.telefono}
+                                Teléfono: {userData.telefono || 'No especificado'}
                             </Text>
                         </View>
                         <View className="flex-row items-center">
                             <Ionicons name="mail-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                Email: {userData.email}
+                                Email: {userData.email || 'No especificado'}
                             </Text>
                         </View>
                     </View>
@@ -198,13 +238,13 @@ export default function Perfil() {
                         <View className="flex-row items-center">
                             <Ionicons name="person-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                {userData.contacto_emergencia1}
+                                {userData.contacto_emergencia1 || 'No especificado'}
                             </Text>
                         </View>
                         <View className="flex-row items-center">
                             <Ionicons name="person-outline" size={20} color="#4b5563" />
                             <Text className="ml-2 text-gray-600">
-                                {userData.contacto_emergencia2}
+                                {userData.contacto_emergencia2 || 'No especificado'}
                             </Text>
                         </View>
                     </View>
@@ -233,6 +273,6 @@ export default function Perfil() {
                     </Text>
                 </TouchableOpacity>
             </View>
-        </View>
+        </ScrollView>
     );
 }
