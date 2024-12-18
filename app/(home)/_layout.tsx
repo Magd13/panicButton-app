@@ -28,10 +28,12 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
       "¿Estás seguro de que deseas cerrar sesión?",
       [
         { text: "Cancelar", style: "cancel" },
-        { text: "Cerrar Sesión", onPress: () => {
-          console.log("Sesión cerrada"); 
-          router.push("/");
-        }}
+        {
+          text: "Cerrar Sesión", onPress: () => {
+            console.log("Sesión cerrada");
+            router.push("/");
+          }
+        }
       ]
     );
   };
@@ -93,7 +95,18 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
           drawerIcon: () => <Ionicons name="person" size={24} color="black" />
         }}
       />
+      <Drawer.Screen
+        name="editProfile" // Debe coincidir con el nombre del archivo
+        options={{
+          headerShown: true,
+          drawerLabel: 'Editar Perfil',
+          title: 'Editar Perfil',
+          drawerItemStyle: { display: 'none' }, // Ocultar en el drawer
+          drawerIcon: () => <Ionicons name="create" size={24} color="black" />
+        }}
+      />
     </Drawer>
+
   );
 }
 
