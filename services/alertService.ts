@@ -4,9 +4,9 @@ import * as SecureStore from 'expo-secure-store';
 import * as Location from 'expo-location';
 
 // Interfaces para las alertas
-interface AlertRequest {
+export interface AlertRequest {
     usuarioId: number;
-    tipo_alert: "Emergencia" | "Precaución";
+    tipo_alert: string;
     mensaje: string;
     latitud: Double;
     longitud: Double;

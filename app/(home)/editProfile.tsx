@@ -61,7 +61,7 @@ export default function EditProfile() {
             if (!result.canceled && result.assets[0].base64) {
                 setFormData(prev => ({
                     ...prev,
-                    foto_perfil: result.assets[0].base64
+                    foto_perfil: result.assets[0].base64 || ''
                 }));
             }
         } catch (error) {
