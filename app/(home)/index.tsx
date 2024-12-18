@@ -6,7 +6,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Location from 'expo-location';
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import * as SecureStore from 'expo-secure-store';
-import {AlertResponse,RegisterRequest, cambiarEstado, register} from "../../services/alertService"
+import {AlertResponse, AlertRequest, cambiarEstado, register} from "../../services/alertService"
 import { useAlert } from "../../providers/alertContext";
 import { PanGestureHandler, GestureHandlerRootView, GestureEvent, PanGestureHandlerEventPayload} from "react-native-gesture-handler"; 
 
@@ -106,7 +106,7 @@ export default function MapPage() {
                     Alert.alert('Error', `No se pudo obtener la ubicación al enviar la alerta de ${alertType}.`);
                     return;
                 }
-                const registerAlert: RegisterRequest = {
+                const registerAlert: AlertRequest = {
                     usuarioId: userData.id,
                     tipo_alert: alertType,
                     mensaje: alertMessage,
