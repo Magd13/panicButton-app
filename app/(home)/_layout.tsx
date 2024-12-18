@@ -6,20 +6,8 @@
   import Ionicons from '@expo/vector-icons/Ionicons';
   import { useEffect, useState } from "react";
   import * as SecureStore from 'expo-secure-store';
-import { Double } from "react-native/Libraries/Types/CodegenTypes";
 import { useAlert } from "../../providers/alertContext";
 
-  interface AlertData {
-    id:number;
-    usuarioId: number;
-    tipo_alert:string;
-    mensaje:string;
-    latitud:Double;
-    longitud:Double;
-    fecha_alerta:string;
-    estado_alerta:boolean;
-    foto_usuario:string;
-  }
 
   export default function HomeLayout() {
     const { alertData, setAlertData } = useAlert();
