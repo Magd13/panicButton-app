@@ -6,22 +6,7 @@ import { Alert } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React, { createContext, useState, useContext } from 'react';
 
-// Definir el tipo para el contexto
-interface AlertContextType {
-  panicActivated: boolean;
-  setPanicActivated: (value: boolean) => void;
-}
-
-// Crear el contexto
-export const AlertContext = createContext<AlertContextType>({
-  panicActivated: false,
-  setPanicActivated: () => null,
-});
-
-// Hook personalizado
-export const useAlert = () => useContext(AlertContext);
-
-function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
+function DrawerNavigator() {
   const handleLogout = () => {
     Alert.alert(
       "Cerrar Sesión",
@@ -42,7 +27,7 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
     <Drawer
       screenOptions={{
         headerStyle: {
-          backgroundColor: panicActivated ? '#EF4444' : '#0A3D62',
+          backgroundColor: '#EF4444',
         },
         headerTintColor: '#fff',
         headerTitleStyle: {
@@ -55,7 +40,7 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
         options={{
           headerShown: true,
           drawerLabel: 'Home',
-          title: panicActivated ? 'Alerta enviada' : 'Activo',
+          title: 'Activo',
           drawerIcon: () => <Ionicons name="home" size={24} color="black" />
         }}
       />
@@ -87,15 +72,6 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
         }}
       />
       <Drawer.Screen
-        name="Ruta de Alerta"
-        options={{
-          headerShown: true,
-          drawerLabel: 'Ruta de Alerta',
-          title: 'Ruta de Alerta',
-          drawerIcon: () => <Ionicons name="person" size={24} color="black" />
-        }}
-      />
-      <Drawer.Screen
         name="editProfile" // Debe coincidir con el nombre del archivo
         options={{
           headerShown: true,
@@ -111,13 +87,10 @@ function DrawerNavigator({ panicActivated }: { panicActivated: boolean }) {
 }
 
 export default function HomeLayout() {
-  const [panicActivated, setPanicActivated] = useState(false);
 
   return (
-    <AlertContext.Provider value={{ panicActivated, setPanicActivated }}>
       <GestureHandlerRootView style={{ flex: 1 }}>
-        <DrawerNavigator panicActivated={panicActivated} />
+        <DrawerNavigator  />
       </GestureHandlerRootView>
-    </AlertContext.Provider>
   );
 }

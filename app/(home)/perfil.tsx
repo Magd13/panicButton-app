@@ -11,6 +11,7 @@ import * as SecureStore from 'expo-secure-store';
 import { useRouter } from "expo-router";
 import { logout } from '../../services/userService';
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { useNavigation } from '@react-navigation/native';
 
 // Interfaz para los datos del usuario
 interface UserData {
@@ -32,6 +33,7 @@ export default function Perfil() {
     const [userData, setUserData] = useState<UserData | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
+    const navigation = useNavigation();
 
     const loadDataUser = async () => {
         try {
@@ -92,8 +94,10 @@ export default function Perfil() {
                     onPress: async () => {
                         try {
                             await logout();
-                            // Con Expo Router, redirigimos así
-                            router.replace("/");
+                            navigation.reset({
+                            index: 0,
+                            routes: [{ name: 'Login' }] 
+                        });
                         } catch (error) {
                             Alert.alert('Error', 'No se pudo cerrar sesión');
                         }
