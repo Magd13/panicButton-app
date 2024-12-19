@@ -1,8 +1,9 @@
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl, Pressable } from "react-native";
 import { useState, useEffect } from "react";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import React from "react";
 import { getAllNotifications } from '../../services/notificationService';
+import { useRouter } from 'expo-router';
 
 
 // Definición de tipos
@@ -62,6 +63,14 @@ const notificacionesEjemplo: Notificacion[] = [
 ];
 
 const TarjetaNotificacion: React.FC<PropsTarjetaNotificacion> = ({ notificacion }) => {
+  const router = useRouter();
+  
+  const handlePress = () => {
+    router.push({
+      pathname: "/(home)/details/[id]",
+      params: { id: notificacion.id }
+    });
+  };
   const estilosNotificacion: Record<TipoNotificacion, EstilosNotificacion> = {
     informativa: {
       icono: "information-circle",
@@ -89,7 +98,8 @@ const TarjetaNotificacion: React.FC<PropsTarjetaNotificacion> = ({ notificacion 
   };
 
   return (
-    <View 
+    <Pressable 
+      onPress={handlePress}
       className={`bg-white p-4 rounded-lg shadow-md mb-4 
       ${estilosNotificacion[notificacion.tipo].contenedor}
       ${notificacion.estado === 'no_leida' ? 'bg-blue-50' : 'bg-white'}`}
@@ -124,7 +134,7 @@ const TarjetaNotificacion: React.FC<PropsTarjetaNotificacion> = ({ notificacion 
           </Text>
         </View>
       </View>
-    </View>
+    </Pressable>
   );
 };
 

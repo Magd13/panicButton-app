@@ -10,7 +10,7 @@ import {AlertResponse, AlertRequest, cambiarEstado, register} from "../../servic
 import { useAlert } from "../../providers/alertContext";
 import { PanGestureHandler, GestureHandlerRootView, GestureEvent, PanGestureHandlerEventPayload} from "react-native-gesture-handler"; 
 
-interface LocationType {
+export interface LocationType {
     latitude: number;
     longitude: number;
     latitudeDelta: number;
