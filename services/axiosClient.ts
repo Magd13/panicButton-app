@@ -1,19 +1,19 @@
 import axios, { AxiosInstance } from 'axios';
 
-const apiClient: AxiosInstance = axios.create({
-    baseURL: 'http://192.168.100.4:8080',
+const Axios: AxiosInstance = axios.create({
+    baseURL: 'http://192.168.100.4:3000',
     timeout: 5000,
     headers: {
         'Content-Type': 'application/json',
     },
 })
 
-apiClient.interceptors.request.use(
+Axios.interceptors.request.use(
     (config) => config,
     (error) => Promise.reject(error)
 );
 
-apiClient.interceptors.response.use (
+Axios.interceptors.response.use (
     (response) => response,
     (error) => {
         if (error.response) {
@@ -27,4 +27,4 @@ apiClient.interceptors.response.use (
     }
 );
 
-export default apiClient;
+export default Axios;
