@@ -31,9 +31,11 @@ export const logout = async (dispatch: AppDispatch) => {
 
 export const register = async (data: RegisterRequest): Promise<UserResponse> => {
   try {
+    console.log('registrando...')
     const response = await axios.post<UserResponse>('/users/register', data);
     return response.data;
   } catch (error: any) {
+    console.log('error', error.response.message)
     if (error.response) {
       throw new Error(error.response.data.message || 'Error al registrar usuario');
     } else {

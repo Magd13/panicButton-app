@@ -6,7 +6,18 @@ import { UserResponse } from "../../services/auth/interfacesAuth"
 interface AuthState {
   isAuthenticated: boolean
   token: string | null;
-  user: UserResponse | null
+  user: {
+    id: string
+    nombre: string;
+    apellido: string;
+    cedula: string;
+    email: string;
+    telefono: string;
+    fecha_registro: string;
+    fecha_nacimiento: Date;
+    contacto_emergencia: string;
+    tipo_sangre: string;
+  } | null
 }
 
 const initialState: AuthState = {
@@ -19,7 +30,7 @@ const userSlice = createSlice({
   name: 'auth',
   initialState,
   reducers: {
-    loginSuccess(state, action: PayloadAction<{ token: string; user: UserResponse}>){
+    loginSuccess(state, action: PayloadAction<{ token: string; user: AuthState['user']}>){
       state.isAuthenticated = true
       state.token = action.payload.token
       state.user = action.payload.user

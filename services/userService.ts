@@ -156,7 +156,7 @@ export const getUserData = async (): Promise<UserData | null> => {
 };
 
 // Cerrar sesión
-export const logout = async (): Promise<void> => {
+export const logout = async (dispatch: any): Promise<void> => {
     try {
         await SecureStore.deleteItemAsync('userData');
     } catch (error) {

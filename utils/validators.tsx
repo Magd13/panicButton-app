@@ -31,4 +31,10 @@ export const validateCedula = (cedula: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
   };
+
+  export const validateCellphone = (telefono:string):boolean => {
+    const telfRegex = /^[0-9]{10}$/;
+    return telfRegex.test(telefono)
+  }
+
   

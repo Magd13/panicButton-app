@@ -4,8 +4,17 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+    nombre: string;
+    apellido: string;
     cedula: string;
+    fecha_nacimiento: string;
+    email: string;
+    telefono: string;
     password: string;
+    fecha_registro: string;
+    contacto_emergencia: string;
+    tipo_sangre: string;
+    foto_perfil: string | null;
 }
 
 export interface UserResponse {

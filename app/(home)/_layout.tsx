@@ -1,18 +1,35 @@
-import { router, Stack } from "expo-router";
+import { useRouter } from "expo-router";
 import "../../global.css";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Drawer } from 'expo-router/drawer';
-import { Alert } from "react-native";
+import { Alert, SafeAreaView } from "react-native";
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from "react";
 import * as SecureStore from 'expo-secure-store';
+import { useDispatch, useSelector } from 'react-redux';
 import { useAlert } from "../../providers/alertContext";
+import { RootState, AppDispatch } from "../../redux/store";
+import { logout } from "../../services/userService";
 
 
 export default function HomeLayout() {
+  const router = useRouter()
+  const dispatch = useDispatch<AppDispatch>()
+  const isAuthenticated = useSelector(
+    (state: RootState) => state.auth.isAuthenticated
+  )
   const { alertData, setAlertData } = useAlert();
-  const [headerBackgroundColor, setHeaderBackgroundColor] = useState<string>('#0A3D62');
-  const [headerTitle, setHeaderTitle] = useState<string>('Home');
+  const [headerBackgroundColor, setHeaderBackgroundColor] = useState<string>('#0A3D62')
+  const [headerTitle, setHeaderTitle] = useState<string>('Home')
+  const [headerBg, setHeaderBg] = useState('#0A3D62')
+
+  useEffect(()=>{
+    if(!isAuthenticated){
+      router.replace('/Login')
+    }
+  },[isAuthenticated])
+
+  if(!isAuthenticated) return null
 
   useEffect(() => {
     const loadAlertData = async () => {
@@ -57,13 +74,14 @@ export default function HomeLayout() {
   const handleLogout = () => {
     Alert.alert(
       "Cerrar Sesión",
-      "¿Estás seguro de que deseas cerrar sesión?",
+      "¿Estás seguro?",
       [
         { text: "Cancelar", style: "cancel" },
-        { text: "Cerrar Sesión", onPress: () =>{
-          console.log("Sesión cerrada"); 
-          router.push("/");
-        }}
+        { text: "Cerrar Sesión", onPress: async () => {
+            await logout(dispatch);   
+            router.replace('/Login');
+          }
+        }
       ]
     );
   };
